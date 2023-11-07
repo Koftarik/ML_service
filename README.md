@@ -1,2 +1,2 @@
-# ML_service
-My first ML web-service on Streamlit framework
+# Flight satisfaction
+Сервис на основе модели логистической регрессии, предсказывающий удовлетворенность клиента полетом. Модель обернута в веб-сервис на фреймворке Streamlit.
