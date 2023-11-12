@@ -11,12 +11,13 @@ from sklearn.metrics import recall_score, accuracy_score, precision_score
 
 import pickle
 
-DATASET_PATH = "https://raw.githubusercontent.com/evgpat/stepik_from_idea_to_mvp/main/datasets/clients.csv"
+#turning off SettingWithCopyWarning: A value is trying to be set on a copy of a slice from a DataFrame
+pd.options.mode.chained_assignment = None 
 
 #open data from given path
-def open_data(DATASET_PATH):
+def open_data(path):
 
-    df = pd.read_csv(DATASET_PATH)
+    df = pd.read_csv(path)
 
     return df
 
@@ -34,6 +35,7 @@ def preprocessing_numeric_data(df: pd.DataFrame):
 
     arrival_99 = np.nanpercentile(df['Arrival Delay in Minutes'], 99)
     df['Arrival Delay in Minutes'] = np.where(df['Arrival Delay in Minutes'] > arrival_99, np.NaN, df['Arrival Delay in Minutes'])
+    
 
     return df
 
@@ -65,8 +67,7 @@ def processing_missing_data(df: pd.DataFrame):
     object_cols = list(df.select_dtypes(include=['object']))
     df.dropna(subset = object_cols, inplace=True)
 
-    df = df.drop('n_nulls', axis=1)
-
+    
     return df
 
 #encode categorial data and scale all data for fitting the model
@@ -139,9 +140,10 @@ def fit_and_save(df: pd.DataFrame, path="data/model.pickle", test=False):
         print(f'Precision: {round(precision_score(y_test, preds), 3)}')
         print(f'Recall: {round(recall_score(y_test, preds), 3)}')
 
-    with open('model.pickle', 'wb') as f:
+    with open(path, 'wb') as f:
         pickle.dump(model, f)
         print(f"Model was saved to {path}")
+        
 
 
 #load preload model
@@ -179,13 +181,8 @@ def predict_on_input(df: pd.DataFrame):
 
     return prediction, prediction_df
 
-if __name__ == "__name__":
+if __name__ == "__main__":
 
-    df = open_data()
-    test = False #change to True if you want to test
-    if test:
-        X_train, X_test, y_train, y_test = prepare_data(df)
-        fit_and_save(X_train, X_test, y_train, y_test)
-    else:
-        X_train, y_train = prepare_data(df)
-        fit_and_save(X_train, y_train)
+    df = open_data(path = "data/clients.csv")
+
+    fit_and_save(df)
