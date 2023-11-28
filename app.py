@@ -1,11 +1,13 @@
 import pandas as pd
 import streamlit as st
 from PIL import Image
-from model import open_data, fit_and_save, predict_on_input
+from model import predict_on_input, encoding_and_scaling
+import time
 
 
 def process_main_page():
     show_main_page()
+    render_main_page()
 
 
 def show_main_page():
@@ -28,19 +30,60 @@ def show_main_page():
 
     st.image(image)
 
-    passenger_info()
-    delay_info()
-    estimated_data()
-
 
 def input_to_df(gender,ticket,loyality,age,distance,trip_type,
                 dep_delay, arr_delay,
                 booking, baggage, seat, wifi, inf_service, onl_board, gate,
                 clean, food, onb_service, ch_service, dep_arr_time, leg_room, inf_ent):
-    pass
+    
+    rule = {
+            'Женский': 'Female',
+            'Мужской': 'Male',
+            'Личная': 'Personal Travel',
+            'По работе': 'Business travel',
+            'Да': 'Loyal Customer',
+            'Нет': 'disloyal Customer',
+            'Эко': 'Eco',
+            'Эко плюс': 'Eco plus',
+            'Бизнес': 'Business',
+            }
+
+    data = {
+            'Class_Eco': 1 if ticket == 'Эко' else 0,
+            'Class_Eco Plus': 1 if ticket == 'Эко плюс' else 0,
+            'Gender': rule[gender],
+            'Age': age,
+            'Customer Type': rule[loyality],
+            'Type of Travel': rule[trip_type],       
+            'Flight Distance': distance,
+            'Departure Delay in Minutes': dep_delay,
+            'Arrival Delay in Minutes': arr_delay,
+            'Inflight wifi service': wifi,
+            'Departure/Arrival time convenient': dep_arr_time,
+            'Ease of Online booking': booking,
+            'Gate location': gate,
+            'Food and drink': food,
+            'Online boarding': onl_board,
+            'Seat comfort': seat,
+            'Inflight entertainment': inf_ent,
+            'On-board service': onb_service,
+            'Leg room service': leg_room,
+            'Baggage handling': baggage,
+            'Checkin service': ch_service,
+            'Inflight service': inf_service,
+            'Cleanliness': clean,
+            }
 
 
-def passenger_info():
+    df = pd.DataFrame(data, index=[0])
+    st.write(df.head(5)) #debug
+    df=encoding_and_scaling(df, app=True)
+    st.write(df.head(5)) #debug
+    return df
+
+
+
+def render_main_page():
 
     st.write('Введите информацию о себе')
     col1, col2 = st.columns(2)
@@ -55,10 +98,6 @@ def passenger_info():
         distance = st.slider('Длина перелёта', min_value=100, max_value=4000)
         trip_type = st.selectbox('Цель поездки', ['Личная', 'По работе'])
     
-    #return gender,ticket,loyality,age,distance,trip_type
-
-
-def delay_info():
 
     st.divider()
     st.write('Были ли задержки в расписании?')
@@ -71,10 +110,6 @@ def delay_info():
 
     st.divider()
 
-    #return dep_delay, arr_delay
-
-
-def estimated_data():
 
     st.write('Заполните анкету')
     col1, col2, col3 = st.columns(3)
@@ -98,12 +133,19 @@ def estimated_data():
         dep_arr_time = st.radio('Время вылета и прилета', [0, 1, 2, 3, 4, 5])
         leg_room = st.radio('Место в ногах', [0, 1, 2, 3, 4, 5])
         inf_ent = st.radio('Развлечения на борту', [0, 1, 2, 3, 4, 5])
+    
+    
+    col1,col2,col3 = st.columns(3)
+    if col2.button('Рассчитать'):
 
-    #return booking, baggage, seat, wifi, inf_service, onl_board, gate,
-    #  clean, food, onb_service, ch_service, dep_arr_time, leg_room, inf_ent
+        user_df = input_to_df(gender,ticket,loyality,age,distance,trip_type,
+                dep_delay, arr_delay,
+                booking, baggage, seat, wifi, inf_service, onl_board, gate,
+                clean, food, onb_service, ch_service, dep_arr_time, leg_room, inf_ent)
 
-def push_button():
-    pass
+        with st.spinner('Рассчитываем...'):
+            time.sleep(1)
+            write_predict(user_df)
 
 
 def write_predict(df: pd.DataFrame):

@@ -39,7 +39,7 @@ def preprocessing_numeric_data(df: pd.DataFrame):
 
     return df
 
-#preprocessing estimated (from 1 to 5) data
+#preprocessing estimated (from 0 to 5) data
 def preprocessing_estimated_data(df: pd.DataFrame):
 
     cathegorial = list(df.select_dtypes(include=['float64']))[4:]
@@ -71,31 +71,42 @@ def processing_missing_data(df: pd.DataFrame):
     return df
 
 #encode categorial data and scale all data for fitting the model
-def encoding_and_scaling(df: pd.DataFrame):
+def encoding_and_scaling(df: pd.DataFrame, app=False):
 
     df['Gender'] = df['Gender'].map({'Male' : 1, 'Female' : 0})
     df['Customer Type'] = df['Customer Type'].map({'Loyal Customer' : 1, 'disloyal Customer' : 0})
     df['Type of Travel'] = df['Type of Travel'].map({'Business travel' : 1, 'Personal Travel' : 0})
-    df['satisfaction'] = df['satisfaction'].map({'satisfied' : 1, 'neutral or dissatisfied' : 0})
+    
+    if not app:
+        df['satisfaction'] = df['satisfaction'].map({'satisfied' : 1, 'neutral or dissatisfied' : 0})
 
-    categorical = ['Class']
-    numeric_features = [col for col in df.columns if col not in categorical]
+        categorical = ['Class']
+        numeric_features = [col for col in df.columns if col not in categorical]
 
-    column_transformer = ColumnTransformer([
-        ('ohe', OneHotEncoder(drop='first', handle_unknown="ignore"), categorical),
-        ('scaling', MinMaxScaler(), numeric_features)
-        ])
+        column_transformer = ColumnTransformer([
+            ('ohe', OneHotEncoder(drop='first', handle_unknown="ignore"), categorical),
+            ('scaling', MinMaxScaler(), numeric_features)
+            ])
+        
+        df= column_transformer.fit_transform(df)
 
-    df= column_transformer.fit_transform(df)
+        lst = list(column_transformer.transformers_[0][1].get_feature_names_out())
+        lst.extend(numeric_features)
 
-    lst = list(column_transformer.transformers_[0][1].get_feature_names_out())
-    lst.extend(numeric_features)
+        df = pd.DataFrame(df, columns=lst)
 
-    df = pd.DataFrame(df, columns=lst)
+    else:
+        numeric_features = [col for col in df.columns]
+        column_transformer = ColumnTransformer([('scaling', MinMaxScaler(), numeric_features)])
+
+        df= column_transformer.fit_transform(df)
+
+        df = pd.DataFrame(df, columns=numeric_features)
 
     return df
 
-#split data to rain and test
+
+#split data to train and test
 def split_data(df: pd.DataFrame, test=False):
 
     X = df.drop(['id', 'satisfaction'], axis=1)
