@@ -10,3 +10,5 @@
 * streamlit_app.py: Файл с приложением streamlit
 ## Технологии
 Pandas, NumPy, matplotlib, seaborn, scikit-learn, streamlit
+## Результат
+Accuracy = 0.875, Precision = 0.868, Recall = 0.836
